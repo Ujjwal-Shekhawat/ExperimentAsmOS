@@ -18,12 +18,26 @@ int 0x10
 mov si, my_string
 call print_string
 
+print_string:
+    mov ah, 0x0e 
+    mov bh, 0x00
+    mov bl, 0x07
+print_character:
+    mov al, [si]                
+    cmp al, 0   
+    je end_print_string
+    int 0x10
+    add si, 1
+    jmp print_character
+end_print_string:
+    ret
+
 ; End program
 hlt
 
 ;;; incluing assembly code in print_string.asm
-include 'print_string.asm'
-include 'print_hex.asm'
+; include 'print_string.asm'
+; include 'print_hex.asm'
 
 my_string: db 'Booted', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
 
