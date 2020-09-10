@@ -18,9 +18,12 @@ int 0x10
 mov si, my_string
 call print_string
 
+; End program
+jmp $
+
 print_string:
     mov ah, 0x0e 
-    mov bh, 0x00
+    mov bh, 0x0
     mov bl, 0x07
 print_character:
     mov al, [si]                
@@ -32,14 +35,11 @@ print_character:
 end_print_string:
     ret
 
-; End program
-hlt
-
 ;;; incluing assembly code in print_string.asm
 ; include 'print_string.asm'
 ; include 'print_hex.asm'
 
-my_string: db 'Booted', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
+my_string: db 'Booted into CustomOS', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
 
 ;; Sector padding
 times 512-($-$$) db 0
