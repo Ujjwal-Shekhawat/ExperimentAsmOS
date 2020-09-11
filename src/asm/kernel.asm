@@ -18,8 +18,38 @@ int 0x10
 mov si, my_string
 call print_string
 
-; End program
-jmp $
+;;; User input
+get_input:
+    mov di, command_string
+key_loop:
+    mov ax, 0x00            ; BISO interrupt to get user input, input goes in to al register ax = 0x00, al =0x00
+    int 0x16
+
+    mov ah, 0x0e
+    cmp al, 0xD
+    je run_command
+    int 0x10                  ; Put character to screen
+    mov [di], al
+    inc di                  ; Increment di
+    jmp key_loop
+
+run_command:
+    mov byte [di], 0
+    mov al, [command_string]
+    cmp al, 'F'
+    jne not_found
+    mov si, user_input_1
+    call print_string
+    jmp get_input
+
+not_found:
+    mov si, command_not_found
+    call print_string
+    jmp get_input
+
+end_program:
+    ; End program
+    jmp $
 
 print_string:
     mov ah, 0x0e 
@@ -40,6 +70,10 @@ end_print_string:
 ; include 'print_hex.asm'
 
 my_string: db 'Booted into FRANXX', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
+user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
+command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
+
+command_string: db ''
 
 ;; Sector padding
 times 512-($-$$) db 0
