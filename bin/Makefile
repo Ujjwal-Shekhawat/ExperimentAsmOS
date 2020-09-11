@@ -14,5 +14,9 @@ kernel.bin:
 	fasm ../src/asm/kernel.asm
 	mv ../src/asm/kernel.bin ./
 
+run:
+	make clean
+	make franxx
+
 clean:
 	rm *.bin

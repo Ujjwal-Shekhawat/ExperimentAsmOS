@@ -37,19 +37,24 @@ run_command:
     mov byte [di], 0
     mov al, [command_string]
     cmp al, 'F'
-    jne not_found
-    mov si, user_input_1
+    je found
+    cmp al, 'N'
+    je end_program
+    mov si, command_not_found
     call print_string
     jmp get_input
 
-not_found:
-    mov si, command_not_found
+found:
+    mov si, user_input_1
     call print_string
     jmp get_input
 
 end_program:
     ; End program
     jmp $
+    ;; Another way to do it but cli is omportant else it will brek
+    ; cli
+    ; hlt
 
 print_string:
     mov ah, 0x0e 
