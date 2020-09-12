@@ -40,7 +40,7 @@ run_command:
     mov byte [di], 0
     mov al, [command_string]
     cmp al, 'F'
-    je found
+    je filetable
     cmp al, 'N'
     je end_program
     cmp al, 'R'
@@ -54,8 +54,52 @@ found:
     call print_string
     jmp get_input
 
+;;;----------------------------------------------------------------------------------------------------
+;;;    Printing the filetable from file_table.asm (START)
+;;;----------------------------------------------------------------------------------------------------
+
+filetable:
+    ;;; Load file table string from it memory location 0x1000:0 in binary
+    xor cx, cx          ; Reset counter for chars in file name
+    mov ax, 0x1000      ; file table location
+    mov es, ax          ; ES = 0x1000
+    xor bx, bx          ; ES:BX = 0x1000:0 als BX = 0
+    mov ah, 0x0e        ; getting ready to print
+
+fileTableLoop:
+    inc bx
+    mov al, [ES:BX]
+    cmp al, '}'         ; End of file table ?
+    je end_program
+    cmp al, ','         ; Next table element ?
+    je new_line
+    inc cx              ; increment counter
+    int 0x10
+    jmp fileTableLoop
+
+new_line:
+    ; Simply put a new line
+    xor cx, cx
+    mov al, 0x0A
+    int 0x10
+    mov al, 0x0D
+    int 0x10
+    jmp fileTableLoop
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Printing the filetable from file_table.asm (END)
+;;;----------------------------------------------------------------------------------------------------
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Warm reboot for x86 (START)
+;;;----------------------------------------------------------------------------------------------------
+
 warm_reboot:
     jmp 0xFFFF:0x0000
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Warm reboot for x86 (END)
+;;;----------------------------------------------------------------------------------------------------
 
 end_program:
     ; End program
@@ -63,6 +107,10 @@ end_program:
     ;; Another way to do it but cli is omportant else it will brek
     ; cli
     ; hlt
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Print String (START)
+;;;----------------------------------------------------------------------------------------------------
 
 print_string:
     mov ah, 0x0e 
@@ -78,9 +126,17 @@ print_character:
 end_print_string:
     ret
 
+;;;----------------------------------------------------------------------------------------------------
+;;;    Warm reboot for x86 (END)
+;;;----------------------------------------------------------------------------------------------------
+
 ;;; incluing assembly code in print_string.asm
 ; include 'print_string.asm'
 ; include 'print_hex.asm'
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Declared Stirngs (START)
+;;;----------------------------------------------------------------------------------------------------
 
 my_string: db 'Booted into FRANXX', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
 menu: db '--------------------------------------------------------------------------------',\
@@ -92,6 +148,10 @@ user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
 
 command_string: db ''
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Declared Strings (END)
+;;;----------------------------------------------------------------------------------------------------
 
 ;; Sector padding
 times 512-($-$$) db 0
