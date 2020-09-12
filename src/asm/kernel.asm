@@ -40,6 +40,8 @@ run_command:
     je found
     cmp al, 'N'
     je end_program
+    cmp al, 'R'
+    je warm_reboot
     mov si, command_not_found
     call print_string
     jmp get_input
@@ -48,6 +50,9 @@ found:
     mov si, user_input_1
     call print_string
     jmp get_input
+
+warm_reboot:
+    jmp 0xFFFF:0x0000
 
 end_program:
     ; End program
