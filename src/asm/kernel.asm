@@ -15,7 +15,7 @@ int 0x10
 
 ;;; BIOS Teletype output
 
-mov si, my_string
+mov si, boot_message
 call print_string
 
 main_menu:
@@ -66,7 +66,7 @@ filetable:
     mov es, ax          ; ES = 0x1000
     xor bx, bx          ; ES:BX = 0x1000:0 als BX = 0
     mov ah, 0x0e        ; getting ready to print
-    
+    call manual
     call new_line       ; Print a new line before printing the contents of file table
 
 fileTableLoop:
@@ -88,6 +88,11 @@ new_line:
     mov al, 0x0D
     int 0x10
     jmp fileTableLoop
+
+manual:
+    mov si, filebrowser_manual
+    call print_string
+    ret
 
 stop:
     mov si, end_filebrowser
@@ -135,14 +140,15 @@ include "../print/print_string.asm"
 ;;;    Declared Stirngs (START)
 ;;;----------------------------------------------------------------------------------------------------
 
-my_string: db 'Booted into FRANXX', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
-menu: db '--------------------------------------------------------------------------------',\
+boot_message: db 'Booted into FRANXX', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
+menu: db 'MAIN MENU-----------------------------------------------------------------------',\
 'F: File browser', 0xA, 0xD,\
 'N: Halt system', 0xA, 0xD,\
 'R: Reboot',0xA, 0xD,\
 '--------------------------------------------------------------------------------', 0
 user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
+filebrowser_manual: db 0xA, 0xD, 'Format - "Name"-"Sector Number"', 0xA, 0xD, 0
 end_filebrowser: db 0xA, 0xD, 'Press any key to return...', 0xA, 0xD, 0
 
 command_string: db ''
