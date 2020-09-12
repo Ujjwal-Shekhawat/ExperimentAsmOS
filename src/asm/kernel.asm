@@ -109,27 +109,14 @@ end_program:
     ; hlt
 
 ;;;----------------------------------------------------------------------------------------------------
-;;;    Print String (START)
+;;;    Includes (START)
 ;;;----------------------------------------------------------------------------------------------------
 
-print_string:
-    mov ah, 0x0e 
-    mov bh, 0x0
-    mov bl, 0x07
-print_character:
-    mov al, [si]                
-    cmp al, 0   
-    je end_print_string
-    int 0x10
-    add si, 1
-    jmp print_character
-end_print_string:
-    ret
+include "../print/print_string.asm"
 
 ;;;----------------------------------------------------------------------------------------------------
-;;;    Warm reboot for x86 (END)
+;;;    Includes (END)
 ;;;----------------------------------------------------------------------------------------------------
-
 ;;; incluing assembly code in print_string.asm
 ; include 'print_string.asm'
 ; include 'print_hex.asm'
