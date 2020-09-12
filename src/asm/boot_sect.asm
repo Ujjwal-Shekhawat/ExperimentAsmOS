@@ -4,7 +4,7 @@
 
 org 0x7c00              ; Setup origin memory so everything is aligned acc to BIOS
 
-;;; READ FILE TABLE INTTO MEMORY
+;;; READ FILE TABLE IN TO MEMORY FIRST
 ;;; Set up regs to load sectors into memory
 mov bx, 0x1000          ; load sector memory address
 mov es, bx              
@@ -18,12 +18,12 @@ mov cl, 0x02            ; Starting sector to read disk from (Here 2rd sector)
 
 read_disk1:
     mov ah, 0x02
-    mov al, 0x01
+    mov al, 0x01        ; Read one sector
     int 0x13
 
     jc read_disk1
 
-;;; READ KERNEL INTO MEMORY
+;;; READ KERNEL INTO MEMORY SECOND
     ;;; Set up regs to load sectors into memory
     mov bx, 0x2000          ; load sector memory address
     mov es, bx              
@@ -37,7 +37,7 @@ read_disk1:
 
 read_disk2:
     mov ah, 0x02
-    mov al, 0x01
+    mov al, 0x02            ; Read two sectors
     int 0x13
 
     jc read_disk2

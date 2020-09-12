@@ -46,6 +46,8 @@ run_command:
     je end_program
     cmp al, 'R'
     je warm_reboot
+    cmp al, 'G'
+    je graphics_mode_switch
     mov si, command_not_found
     call print_string
     jmp get_input
@@ -116,6 +118,44 @@ warm_reboot:
 ;;;    Warm reboot for x86 (END)
 ;;;----------------------------------------------------------------------------------------------------
 
+;;;----------------------------------------------------------------------------------------------------
+;;;    Graphics Mode (START)
+;;;----------------------------------------------------------------------------------------------------
+
+graphics_mode_switch:
+    call resetGraphicsMode
+    mov ah, 0x0C
+    mov al, 0x01
+    mov bh, 0x00
+    mov cx, 100
+    mov dx, 100
+squareLoop:
+    inc cx
+    int 0x10
+    cmp cx, 150
+    jne squareLoop
+    inc dx
+    int 0x10
+    mov cx, 99
+    cmp dx, 150
+    jne squareLoop
+
+    int 0x10
+
+    ;;; Return to the main menu
+    mov si, end_filebrowser     ; Variable contaning a message
+    call print_string
+    mov ah, 0x00
+    int 0x16
+    call resetTextMode          ; Restore
+    jmp main_menu
+
+    hlt
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Graphics Mode (END)
+;;;----------------------------------------------------------------------------------------------------
+
 end_program:
     ; End program
     jmp $
@@ -128,6 +168,8 @@ end_program:
 ;;;----------------------------------------------------------------------------------------------------
 
 include "../print/print_string.asm"
+include "../screen/resetTextMode.asm"
+include "../screen/resetGraphicsMode.asm"
 
 ;;;----------------------------------------------------------------------------------------------------
 ;;;    Includes (END)
@@ -145,6 +187,7 @@ menu: db 'MAIN MENU-------------------------------------------------------------
 'F: File browser', 0xA, 0xD,\
 'N: Halt system', 0xA, 0xD,\
 'R: Reboot',0xA, 0xD,\
+'G: Graphcis Mode', 0xA, 0xD,\
 '--------------------------------------------------------------------------------', 0
 user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
@@ -158,4 +201,4 @@ command_string: db ''
 ;;;----------------------------------------------------------------------------------------------------
 
 ;; Sector padding
-times 512-($-$$) db 0
+times 1024-($-$$) db 0
