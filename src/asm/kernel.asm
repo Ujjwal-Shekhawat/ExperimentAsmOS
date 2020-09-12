@@ -18,8 +18,9 @@ int 0x10
 mov si, my_string
 call print_string
 
-mov si, menu
-call print_string
+main_menu:
+    mov si, menu
+    call print_string
 
 ;;; User input
 get_input:
@@ -65,12 +66,14 @@ filetable:
     mov es, ax          ; ES = 0x1000
     xor bx, bx          ; ES:BX = 0x1000:0 als BX = 0
     mov ah, 0x0e        ; getting ready to print
+    
+    call new_line       ; Print a new line before printing the contents of file table
 
 fileTableLoop:
     inc bx
     mov al, [ES:BX]
     cmp al, '}'         ; End of file table ?
-    je end_program
+    je stop
     cmp al, ','         ; Next table element ?
     je new_line
     inc cx              ; increment counter
@@ -85,6 +88,13 @@ new_line:
     mov al, 0x0D
     int 0x10
     jmp fileTableLoop
+
+stop:
+    mov si, end_filebrowser
+    call print_string
+    mov ah, 0x00
+    int 0x16
+    jmp main_menu
 
 ;;;----------------------------------------------------------------------------------------------------
 ;;;    Printing the filetable from file_table.asm (END)
@@ -134,6 +144,7 @@ menu: db '----------------------------------------------------------------------
 user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
 
+end_filebrowser: db 0xA, 0xD, 'Press any key to return...', 0xA, 0xD, 0
 command_string: db ''
 
 ;;;----------------------------------------------------------------------------------------------------
