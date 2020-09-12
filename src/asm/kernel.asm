@@ -13,9 +13,12 @@ mov bh, 0x00
 mov bl, 0x01
 int 0x10
 
-;;; Teletype output
+;;; BIOS Teletype output
 
 mov si, my_string
+call print_string
+
+mov si, menu
 call print_string
 
 ;;; User input
@@ -80,6 +83,11 @@ end_print_string:
 ; include 'print_hex.asm'
 
 my_string: db 'Booted into FRANXX', 0xA, 0xD, 0 ; 0xD beggining of the line and 0xA new line 
+menu: db '--------------------------------------------------------------------------------',\
+'F: File browser', 0xA, 0xD,\
+'N: Halt system', 0xA, 0xD,\
+'R: Reboot',0xA, 0xD,\
+'--------------------------------------------------------------------------------', 0
 user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
 
