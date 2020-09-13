@@ -160,18 +160,67 @@ program_not_found:
     jmp stop
 
 found_program:
-    mov si, program_found_string
-    call print_string
-    mov si, end_filebrowser
+    inc bx
+    mov cl, 10
+    xor al, al
+
+next_sector_number:
+    mov dl, [ES:BX]
+    inc bx
+    cmp dl, ','
+    je load_program
+    cmp dl, 48
+    jl sector_not_found
+    cmp dl, 57
+    jg sector_not_found
+    sub dl, 48
+    mul cl
+    add al, dl
+    jmp next_sector_number
+
+sector_not_found:
+    mov si, sec_not_found
     call print_string
     mov ah, 0x00
     int 0x16
-    jmp main_menu
+    mov ah, 0x0e
+    int 0x10
+    cmp al, 'Y'
+    je filetable
+    jmp stop
 
 load_program:
-    mov ax, di                  ; ax stores the address of di
-    mov di, [ES:BX]             ; di stores the address of [ES:BX] currently 0x1000:0000 address of out file table
-    jmp $
+    mov cl, al          ; Sector number to load from
+
+    mov ah, 0x00
+    mov dl, 0x00
+    int 0x13
+    mov ax, 0x8000
+    mov es, ax
+    xor bx, bx
+
+    mov ah, 0x02
+    mov al, 0x01
+    mov ch, 0x00
+    mov dh, 0x00
+    mov dl, 0x00
+
+    int 0x13
+    mov si, loading_message
+    call print_string
+    jnc program_loaded
+    
+    ; Else Print error message
+
+program_loaded:
+    mov ax, 0x8000
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
+    jmp 0x8000:0x0000    ; Far jump to thos memory address where we loaded our program 
 
 stop:
     mov si, end_filebrowser
@@ -272,9 +321,11 @@ filebrowser_manual: db 0xA, 0xD, 'Format - "Name"-"Sector Number"', 0xA, 0xD, 0
 program_menu: db 0xA, 0xD, 0xA, 0xD, 'Enter the name of the program :', 0xA, 0xD, 0
 program_found_string: db 0xA, 0xD, 'Program found', 0xA, 0xD, 0xA, 0xD, 0xA, 0xD, 0
 pgm_not_found: db 0xA, 0xD, 'Program not found Again (Y) : ', 0
+sec_not_found: db 0xA, 0xD, 'Sector not found try again (Y) : ', 0
 command_length: db 0
 end_filebrowser: db 0xA, 0xD, 'Press any key to return...', 0xA, 0xD, 0
 
+loading_message: db 0xA, 0xD, 'Press any key to load program ...', 0xD, 0xA
 command_string: db ''
 
 ;;;----------------------------------------------------------------------------------------------------
