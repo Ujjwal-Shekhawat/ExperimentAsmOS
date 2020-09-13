@@ -20,7 +20,7 @@ _start:
     ; end clear_enemies
 
     ; init screen
-    mov al, 0x1            ; Border color
+    mov al, 0xf            ; Border color
     mov cx, screen_width*screen_height
     xor di, di
     rep stosb
@@ -45,7 +45,7 @@ _game_loop:
 
 
     ; clear playarea
-    mov al, 0x65                ; sky color
+    mov al, 0xf                ; sky color
     mov di, playarea_start
     mov cx, playarea_lines*screen_width
     rep stosb
@@ -325,7 +325,7 @@ random_pixel:
     in al, 0x40
     and al, 0x55
     jz _dd_black
-    mov al, 0x87       ; Dirt color
+    mov al, 0xf       ; Dirt color
 _dd_black:
     stosb
     ret
