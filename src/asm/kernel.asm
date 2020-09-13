@@ -75,7 +75,7 @@ fileTableLoop:
     inc bx
     mov al, [ES:BX]
     cmp al, '}'         ; End of file table ?
-    je stop
+    je get_program_name
     cmp al, ','         ; Next table element ?
     je new_line
     inc cx              ; increment counter
@@ -96,12 +96,89 @@ manual:
     call print_string
     ret
 
-stop:
+get_program_name:
+    mov si, program_menu
+    call print_string
+    mov di, command_string          ; di pointing to command string
+    mov byte [command_length], 0    ; rester the length of stirng variable to 0 
+
+program_name_loop:
+    mov ax, 0x00                ; BIOS interrupt to get user input, input goes in to al register ax = 0x00, al =0x00
+    int 0x16
+
+    mov ah, 0x0e
+    cmp al, 0xD
+    je start_search
+    inc byte [command_length]   ; add to counter
+    mov [di], al
+    int 0x10                    ; Put character to screen
+    inc di                      ; Increment di
+    jmp program_name_loop
+
+start_search:
+    mov di, command_string
+    xor bx, bx
+
+check_next_character:
+    mov al, [ES:BX]
+    cmp al, '}'
+    je program_not_found
+    cmp al, [di]
+    je start_compare
+    inc bx
+    jmp check_next_character
+
+start_compare:
+    push bx
+    mov byte cl, [command_length]
+
+compare_loop:
+    mov al, [ES:BX]
+    inc bx
+    cmp al, [di]
+    jne restart_search
+    dec cl
+    jz found_program
+    inc di
+    jmp compare_loop
+
+restart_search:
+    mov di, command_string
+    pop bx
+    inc bx
+    jmp check_next_character
+
+program_not_found:
+    mov si, pgm_not_found
+    call print_string
+    mov ah, 0x00
+    int 0x16
+    mov ah, 0x0e
+    int 0x10
+    cmp al, 'Y'
+    je filetable
+    jmp stop
+
+found_program:
+    mov si, program_found_string
+    call print_string
     mov si, end_filebrowser
     call print_string
     mov ah, 0x00
     int 0x16
     jmp main_menu
+
+load_program:
+    mov ax, di                  ; ax stores the address of di
+    mov di, [ES:BX]             ; di stores the address of [ES:BX] currently 0x1000:0000 address of out file table
+    jmp $
+
+stop:
+    mov si, end_filebrowser
+    call print_string
+    mov ah, 0x00        ; Set ah to 0x00 for getting to take user input
+    int 0x16            ; BIOS interrupt for user input
+    jmp main_menu       ; Jumpnack to main_menu
 
 ;;;----------------------------------------------------------------------------------------------------
 ;;;    Printing the filetable from file_table.asm (END)
@@ -192,6 +269,10 @@ menu: db 'MAIN MENU-------------------------------------------------------------
 user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
 filebrowser_manual: db 0xA, 0xD, 'Format - "Name"-"Sector Number"', 0xA, 0xD, 0
+program_menu: db 0xA, 0xD, 0xA, 0xD, 'Enter the name of the program :', 0xA, 0xD, 0
+program_found_string: db 0xA, 0xD, 'Program found', 0xA, 0xD, 0xA, 0xD, 0xA, 0xD, 0
+pgm_not_found: db 0xA, 0xD, 'Program not found Again (Y) : ', 0
+command_length: db 0
 end_filebrowser: db 0xA, 0xD, 'Press any key to return...', 0xA, 0xD, 0
 
 command_string: db ''
