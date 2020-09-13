@@ -20,7 +20,7 @@ _start:
     ; end clear_enemies
 
     ; init screen
-    mov al, 0x0f
+    mov al, 0x1            ; Border color
     mov cx, screen_width*screen_height
     xor di, di
     rep stosb
@@ -45,7 +45,7 @@ _game_loop:
 
 
     ; clear playarea
-    mov al, 0x0f
+    mov al, 0x65                ; sky color
     mov di, playarea_start
     mov cx, playarea_lines*screen_width
     rep stosb
@@ -273,31 +273,59 @@ _game_loop:
 ; prints game over string, waits for input, and then resets the game
 game_over:
     mov bx, 0x000f          ; page 0, white colour
-    mov dx, 0x0c0f          ; cursor row and col
+    mov dx, 0x0c03          ; cursor row and col
     mov ah, 0x02            ; set cursor
     int 0x10
 
     mov ah, 0x0e            ; print char interrupt
     mov cx, 10              ; 10 chars
     mov si, str_go          ; point to game_over string
-                            ; Return to kernel code from here
-
-_go_l:
-    lodsb                   ; get char
-    int 0x10                ; print it
-    loop _go_l
+    call print_string
+; _go_l:
+;     lodsb                   ; get char
+;     int 0x10                ; print it
+;     loop _go_l
 
     mov ah, 0x00            ; wait for an input
     int 0x16
 
-    jmp _start
+;;;
+;;;    My code
+;;;
+    mov bx, 0x2000          ; load sector into memory address
+    mov es, bx              
+    mov bx, 0x0             ; ES:BX = 0x2000:0x0
+
+    ;;; Setup disk read
+    mov dh, 0x0             ; head 0
+    mov dl, 0x0             ; drive 0
+    mov ch, 0x0             ; cylinder 0
+    mov cl, 0x03            ; Starting sector to read disk from (Here 3rd sector)
+
+backTo_kernel:
+    mov ah, 0x02
+    mov al, 0x02            ; Read two sectors
+    int 0x13
+
+    jc backTo_kernel
+
+    mov ax, 0x2000      ; 0x1000 is for file table
+    mov ds, ax          ; Data segment  
+    mov es, ax          ; Extra segment
+    mov fs, ax          ; Extra segment
+    mov gs, ax          ; Extra segment
+    mov ss, ax          ; Stack Segment
+
+    jmp 0x2000:0x0      ; Far jump to sector adress 0x2000:0x0 (Where kernel is loaded into memory ...)
+
+    jmp _start          ; Technicall dead code
 
 
 random_pixel:
     in al, 0x40
     and al, 0x55
     jz _dd_black
-    mov al, 0x0f
+    mov al, 0x87       ; Dirt color
 _dd_black:
     stosb
     ret
@@ -416,7 +444,7 @@ enemies_start   equ 0xfa20  ; x_pos, y_pos, sprite_addr (byte, byte, word)
 
 
 ; game_over string const
-str_go  db  "game over!"
+str_go  db  "GAME OVER PRESS ANY KEY TO RETURN", 0
 
 ; sprite data
 dino    db  0b00000110, \
@@ -446,5 +474,23 @@ bomber  db  0b00000011, \
             0b00000111, \
             0b00000001
 
-; the magic number
-times 512-($-$$) db 0
+print_string:
+    pusha                       ; Store all regesters on the stack
+    mov ah, 0x0e 
+    mov bh, 0x00 
+    mov bl, 0x07                ; Storing just in case we dont mess up with the vals in our code
+
+print_character:
+    mov al, [si]                
+    cmp al, 0   
+    je end_print_string
+    int 0x10
+    add si, 1
+    jmp print_character
+
+end_print_string:
+    popa                        ; Restore all registers form the stack
+    ret
+
+; sector padding
+times 1024-($-$$) db 0

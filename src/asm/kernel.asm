@@ -116,8 +116,8 @@ program_name_loop:
     jmp program_name_loop
 
 start_search:
-    mov di, command_string
-    xor bx, bx
+    mov di, command_string      ; Reset di to start address of command stirng 
+    xor bx, bx                  ; Zero out bx
 
 check_next_character:
     mov al, [ES:BX]
@@ -200,7 +200,7 @@ load_program:
     xor bx, bx
 
     mov ah, 0x02
-    mov al, 0x01
+    mov al, 0x02
     mov ch, 0x00
     mov dh, 0x00
     mov dl, 0x00
