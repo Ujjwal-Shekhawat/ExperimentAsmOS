@@ -4,7 +4,7 @@
 
 ;;; Set video mode
 mov ah, 0x00            ; int 0x10/ 0x00 = Set video mode
-mov al, 0x01            ; Setting video mode to regulair text mode of 80x25
+mov al, 0x03            ; Setting video mode to regulair text mode of 80x25
 int 0x10
 
 ;;; Set color
