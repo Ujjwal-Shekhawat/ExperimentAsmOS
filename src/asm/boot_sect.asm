@@ -17,7 +17,7 @@ mov ch, 0x0             ; cylinder 0
 mov cl, 0x02            ; Starting sector to read disk from (Here 2rd sector)
 
 read_disk1:
-    mov ah, 0x02        ; BIOS int 13 ah = 2 read disck sectors
+    mov ah, 0x02        ; BIOS int 13 ah = 2 read disk sectors
     mov al, 0x01        ; Read one sector (n number of sectors can be read 0x0n)
     int 0x13            ; BIOS interrupt for disks
 
@@ -37,7 +37,7 @@ read_disk1:
 
 read_disk2:
     mov ah, 0x02
-    mov al, 0x02            ; Read two sectors
+    mov al, 0x03            ; Read three sectors (as kernel occupies 3 sectors now)
     int 0x13
 
     jc read_disk2

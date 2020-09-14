@@ -72,29 +72,62 @@ filetable:
     call new_line       ; Print a new line before printing the contents of file table
 
 fileTableLoop:
+    mov al, [ES:BX]
+    cmp al, 0
+    je get_program_name
+    int 0x10
+    cmp cx, 9
+    je file_extension
+    inc bx
+    inc cx
+    jmp fileTableLoop
+
+file_extension:
+    mov cx, 6
+
+    call print_blank_space  ; Prints blank spce [cx] times
+
     inc bx
     mov al, [ES:BX]
-    cmp al, '}'         ; End of file table ?
-    je get_program_name
-    cmp al, ','         ; Next table element ?
-    je new_line
-    inc cx              ; increment counter
     int 0x10
-    jmp fileTableLoop
+    inc bx
+    mov al, [ES:BX]
+    int 0x10
+    inc bx
+    mov al, [ES:BX]
+    int 0x10
 
-new_line:
-    ; Simply put a new line
+check_directory_number:
+    mov cx, 16
+    call print_blank_space  ; Prints blank spce [cx] times
+
+    inc bx
+    mov al, [ES:BX]
+    call print_hex_as_ascii
+
+start_sector_number:
+    mov cx, 18
+    call print_blank_space  ; Prints blank spce [cx] times
+
+    inc bx
+    mov al, [ES:BX]
+    call print_hex_as_ascii
+
+file_size:
+    mov cx, 18
+    call print_blank_space  ; Prints blank spce [cx] times
+
+    inc bx
+    mov al, [ES:BX]
+    call print_hex_as_ascii
+    mov al, 0xA
+    int 0x10
+    mov al, 0xD
+    int 0x10
+
+    inc bx
     xor cx, cx
-    mov al, 0x0A
-    int 0x10
-    mov al, 0x0D
-    int 0x10
     jmp fileTableLoop
-
-manual:
-    mov si, filebrowser_manual
-    call print_string
-    ret
 
 get_program_name:
     mov si, program_menu
@@ -103,7 +136,7 @@ get_program_name:
     mov byte [command_length], 0    ; rester the length of stirng variable to 0 
 
 program_name_loop:
-    mov ax, 0x00                ; BIOS interrupt to get user input, input goes in to al register ax = 0x00, al =0x00
+    xor ax, ax                  ; BIOS interrupt to get user input, input goes in to al register ax = 0x00, al =0x00
     int 0x16
 
     mov ah, 0x0e
@@ -111,8 +144,8 @@ program_name_loop:
     je start_search
     inc byte [command_length]   ; add to counter
     mov [di], al
-    int 0x10                    ; Put character to screen
     inc di                      ; Increment di
+    int 0x10                    ; Put character to screen
     jmp program_name_loop
 
 start_search:
@@ -121,11 +154,11 @@ start_search:
 
 check_next_character:
     mov al, [ES:BX]
-    cmp al, '}'
+    cmp al, 0
     je program_not_found
     cmp al, [di]
     je start_compare
-    inc bx
+    add bx, 16
     jmp check_next_character
 
 start_compare:
@@ -160,57 +193,33 @@ program_not_found:
     jmp stop
 
 found_program:
+    add bx, 4
+    mov cl, [ES:BX]
     inc bx
-    mov cl, 10
-    xor al, al
-
-next_sector_number:
-    mov dl, [ES:BX]
-    inc bx
-    cmp dl, ','
-    je load_program
-    cmp dl, 48
-    jl sector_not_found
-    cmp dl, 57
-    jg sector_not_found
-    sub dl, 48
-    mul cl
-    add al, dl
-    jmp next_sector_number
-
-sector_not_found:
-    mov si, sec_not_found
-    call print_string
-    mov ah, 0x00
-    int 0x16
-    mov ah, 0x0e
-    int 0x10
-    cmp al, 'Y'
-    je filetable
-    jmp stop
+    mov bl, [ES:BX]
 
 load_program:
-    mov cl, al          ; Sector number to load from
-
-    mov ah, 0x00
+    xor ax, ax
     mov dl, 0x00
     int 0x13
     mov ax, 0x8000
     mov es, ax
+    mov al, bl
     xor bx, bx
 
     mov ah, 0x02
-    mov al, 0x02
     mov ch, 0x00
     mov dh, 0x00
     mov dl, 0x00
 
     int 0x13
-    mov si, loading_message
-    call print_string
     jnc program_loaded
     
-    ; Else Print error message
+    mov si, program_not_loaded
+    call print_string
+    mov ah, 0x00
+    int 0x16
+    jmp main_menu
 
 program_loaded:
     mov ax, 0x8000
@@ -220,7 +229,7 @@ program_loaded:
     mov gs, ax
     mov ss, ax
 
-    jmp 0x8000:0x0000    ; Far jump to thos memory address where we loaded our program 
+    jmp 0x8000:0x0000    ; Far jump to this memory address where we loaded our program 
 
 stop:
     mov si, end_filebrowser
@@ -228,6 +237,20 @@ stop:
     mov ah, 0x00        ; Set ah to 0x00 for getting to take user input
     int 0x16            ; BIOS interrupt for user input
     jmp main_menu       ; Jumpnack to main_menu
+
+new_line:
+    ; Simply put a new line
+    xor cx, cx
+    mov al, 0x0A
+    int 0x10
+    mov al, 0x0D
+    int 0x10
+    jmp fileTableLoop
+
+manual:
+    mov si, filebrowser_manual
+    call print_string
+    ret
 
 ;;;----------------------------------------------------------------------------------------------------
 ;;;    Printing the filetable from file_table.asm (END)
@@ -290,6 +313,42 @@ end_program:
     ; hlt
 
 ;;;----------------------------------------------------------------------------------------------------
+;;;    Converts and prints hex value to ascii value (START)
+;;;----------------------------------------------------------------------------------------------------
+print_hex_as_ascii:
+    mov ah, 0x0e
+    add al, 0x30
+    cmp al, 0x39
+    jle hex_num
+    add al, 0x7
+
+hex_num:
+    int 0x10
+    ret
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Converts and prints hex value to ascii value (END)
+;;;----------------------------------------------------------------------------------------------------
+
+;;;----------------------------------------------------------------------------------------------------
+;;;    Prints blank space [cx] times (START)
+;;;----------------------------------------------------------------------------------------------------
+print_blank_space:
+    cmp cx, 0
+    je end_print_blank_space
+    mov ah, 0x0e
+    mov al, ' '
+    int 0x10
+    dec cx
+    jmp print_blank_space
+
+end_print_blank_space:
+    ret 
+;;;----------------------------------------------------------------------------------------------------
+;;;    Prints blank space [cx] times (END)
+;;;----------------------------------------------------------------------------------------------------
+
+;;;----------------------------------------------------------------------------------------------------
 ;;;    Includes (START)
 ;;;----------------------------------------------------------------------------------------------------
 
@@ -317,11 +376,14 @@ menu: db 'MAIN MENU-------------------------------------------------------------
 '--------------------------------------------------------------------------------', 0
 user_input_1: db 0xA, 0xD, 'Command present', 0xA, 0xD, 0
 command_not_found: db 0xA, 0xD, 'Command not found', 0xA, 0xD, 0
-filebrowser_manual: db 0xA, 0xD, 'Format - "Name"-"Sector Number"', 0xA, 0xD, 0
+filebrowser_manual: db 0xA, 0xD, '--------------------------------------------------------------------------------', \
+                       'File name    ', 'File extension', '    Directory entry    ', 'Starting sector', '    File size', \
+                       0xA, 0xD, '--------------------------------------------------------------------------------', 0xA, 0xD, 0
 program_menu: db 0xA, 0xD, 0xA, 0xD, 'Enter the name of the program :', 0xA, 0xD, 0
 program_found_string: db 0xA, 0xD, 'Program found', 0xA, 0xD, 0xA, 0xD, 0xA, 0xD, 0
 pgm_not_found: db 0xA, 0xD, 'Program not found Again (Y) : ', 0
 sec_not_found: db 0xA, 0xD, 'Sector not found try again (Y) : ', 0
+program_not_loaded: db 0xA, 0xD, 'Program not loaded', 0xA, 0xD, 'Press any key to return ...', 0xA, 0xD, 0
 command_length: db 0
 end_filebrowser: db 0xA, 0xD, 'Press any key to return...', 0xA, 0xD, 0
 
@@ -333,4 +395,4 @@ command_string: db ''
 ;;;----------------------------------------------------------------------------------------------------
 
 ;; Sector padding
-times 1024-($-$$) db 0
+times 1536-($-$$) db 0

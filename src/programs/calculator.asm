@@ -12,7 +12,7 @@ int 0x16
 
 backTo_kernel:
     mov ah, 0x02
-    mov al, 0x02            ; Read two sectors
+    mov al, 0x03            ; Read three sectors
     int 0x13
 
     jc backTo_kernel

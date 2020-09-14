@@ -1,5 +1,5 @@
-franxx: boot_sect.bin file_table.bin kernel.bin calculator.bin dino_game.bin
-	cat boot_sect.bin file_table.bin kernel.bin calculator.bin dino_game.bin > franxx.bin
+franxx: boot_sect.bin file_table.bin kernel.bin calculator.bin
+	cat boot_sect.bin file_table.bin kernel.bin calculator.bin > franxx.bin
 
 boot_sect.bin:
 	fasm ../src/asm/boot_sect.asm
@@ -16,10 +16,6 @@ kernel.bin:
 calculator.bin:
 	fasm ../src/programs/calculator.asm
 	mv ../src/programs/calculator.bin ./
-
-dino_game.bin:
-	nasm -f bin ../src/games/dino_game.asm -o ../src/games/dino_game.bin
-	mv ../src/games/dino_game.bin ./
 
 run:
 	make clean
