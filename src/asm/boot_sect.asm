@@ -55,7 +55,7 @@ read_disk2:
 times 510-($-$$) db 0
 dw 0xaa55               ; BIOS x86 magic number
 
-
+;;; Later I will shift these comments to the kernel.asm 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ax, bx, cx, dx gen prp regs 16-bit real mode regs
 ; ah       al
