@@ -1,6 +1,5 @@
 franxx: boot_sect.bin file_table.bin kernel.bin calculator.bin dino_game.bin
 	cat boot_sect.bin file_table.bin kernel.bin calculator.bin dino_game.bin > franxx.bin
-	qemu-system-x86_64 -fda franxx.bin
 
 boot_sect.bin:
 	fasm ../src/asm/boot_sect.asm
@@ -25,6 +24,6 @@ dino_game.bin:
 run:
 	make clean
 	make franxx
-
+	qemu-system-x86_64 -fda franxx.bin
 clean:
 	rm *.bin
